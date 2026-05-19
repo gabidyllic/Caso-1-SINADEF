@@ -1,0 +1,58 @@
+---
+title: "Caso 1: Pre-procesamiento SINADEF"
+author: "Gabriela Vargas Donato"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: cosmo
+---
+
+# Pre-procesamiento de datos SINADEF (2019 - 2020)
+
+A continuación se presenta el código paso a paso para la limpieza y cálculo del ratio de muertes provinciales.
+
+```{r, message=FALSE, warning=FALSE}
+# 1. PREPARACIÓN DEL ENTORNO
+# Cargamos la librería tidyverse que contiene todas las herramientas para manipular datos
+library(tidyverse)
+
+# Establecemos la semilla aleatoria solicitada en las instrucciones de la rúbrica
+set.seed(123)
+
+# 2. LECTURA DE DATOS
+sinadef <- read_csv("SINADEF_DATOS_ABIERTOS.csv")
+
+# 3. PROCESAMIENTO
+# Creamos un nuevo objeto llamado sinadef_limpio para almacenar nuestro resultado
+sinadef_limpio <- sinadef %>%
+  
+  # Filtramos las filas para conservar únicamente los casos de los años 2019 y 2020
+  filter(ANIO == 2019 | ANIO == 2020) %>%
+  
+  # Agrupamos la información por provincia de fallecimiento y por el año
+  group_by(PROVINCIA_FALLECIMIENTO, ANIO) %>%
+  
+  # Contamos el total de filas (cada fila es un fallecido) por cada provincia y año
+  summarise(Total_Fallecidos = n(), .groups = "drop") %>%
+  
+  # Transformamos la tabla para que los años (2019 y 2020) pasen a ser columnas independientes
+  pivot_wider(names_from = ANIO, values_from = Total_Fallecidos) %>%
+  
+  # Creamos la nueva variable "Ratio_2020_2019" dividiendo las muertes de 2020 entre las de 2019
+  mutate(Ratio_2020_2019 = `2020` / `2019`) %>%
+  
+  # Nos quedamos exclusivamente con la columna de la provincia y la columna del ratio calculado
+  select(PROVINCIA_FALLECIMIENTO, Ratio_2020_2019) %>%
+  
+  # Eliminamos cualquier fila vacía (NA) para asegurar que la base esté completamente limpia
+  drop_na()
+
+# 4. VISUALIZACIÓN Y EXPORTACIÓN
+# Mostramos las primeras 6 filas de nuestra tabla limpia para verificar en el HTML final
+head(sinadef_limpio)
+
+# Guardamos el resultado final en un nuevo archivo CSV muy liviano
+# ESTE ES EL ARCHIVO QUE SÍ DEBES SUBIR A TU PRIMER REPOSITORIO DE GITHUB
+write_csv(sinadef_limpio, "SINADEF_Ratio_2020_2019.csv")
+```
+
